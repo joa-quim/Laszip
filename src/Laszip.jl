@@ -1,5 +1,6 @@
 module Laszip
 
-# package code goes here
+include("laszip_h.jl")
+include("laszip_dll.jl")
 
 end # module
