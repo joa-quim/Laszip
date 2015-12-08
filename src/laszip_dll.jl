@@ -84,7 +84,10 @@ function laszip_add_vlr(pointer::Ptr{Void},vlr::Ptr{laszip_vlr})
     ccall((:laszip_add_vlr,laszip),Cint,(Ptr{Void},Ptr{laszip_vlr}),pointer,vlr)
 end
 
-function laszip_open_writer(pointer::Ptr{Void},file_name::Ptr{UInt8},compress::Cint)
+function laszip_open_writer(pointer::Ptr{Void},file_name::Ptr{UInt8},compress::Int)
+    ccall((:laszip_open_writer,laszip),Cint,(Ptr{Void},Ptr{UInt8},Cint),pointer,file_name,compress)
+end
+function laszip_open_writer(pointer::Ptr{Void}, file_name::AbstractString, compress::Int)
     ccall((:laszip_open_writer,laszip),Cint,(Ptr{Void},Ptr{UInt8},Cint),pointer,file_name,compress)
 end
 
@@ -99,7 +102,7 @@ end
 function laszip_open_reader(pointer::Ptr{Void},file_name::Ptr{UInt8},is_compressed::Ptr{Cint})
     ccall((:laszip_open_reader,laszip),Cint,(Ptr{Void},Ptr{UInt8},Ptr{Cint}),pointer,file_name,is_compressed)
 end
-function laszip_open_reader(pointer::Ptr{Void},file_name::ASCIIString,is_compressed::Ptr{Cint})
+function laszip_open_reader(pointer::Ptr{Void},file_name::AbstractString, is_compressed::Ptr{Cint})
     ccall((:laszip_open_reader,laszip),Cint,(Ptr{Void},Ptr{UInt8},Ptr{Cint}),pointer,file_name,is_compressed)
 end
 
