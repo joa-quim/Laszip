@@ -28,11 +28,34 @@ export
 	laszip_open_reader,
 	laszip_seek_point,
 	laszip_read_point,
-	laszip_close_reader
+	laszip_close_reader,
+# Non C-wrapper functions
+	xyz2laz, laz2xyz, msgerror
 
 include("laszip_h.jl")
 include("laszip_dll.jl")
 include("laz2xyz.jl")
 include("xyz2laz.jl")
+
+"""
+	Prints an laszip error message and error out
+
+	msgerror(lzobj::Ptr{Void}, extramsg::AbstractString="")
+
+	Where:
+		"lzobj" is a pointer to laszip_readert|writer created by unsafe_load(laszip_create(arg))
+		"extramsg" is an optional extra message to be printed before the laszip error message.
+"""
+
+function msgerror(lzobj::Ptr{Void}, extramsg::AbstractString="")
+	pStr = pointer([pointer(lpad("",128,"        "))])		# Create a 1024 bytes string and get its pointer
+	laszip_get_error(lzobj, pStr)
+	Str = bytestring(unsafe_load(pStr))
+	if (isempty(extramsg))
+		error(Str)
+	else
+		error(extramsg * "\n\t" * Str)
+	end
+end
 
 end # module
