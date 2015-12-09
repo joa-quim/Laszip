@@ -3,24 +3,15 @@ using Laszip
 """
 Write XYZ data to a LIDAR laz (laszip compressed) or las format file. Usage:
 
-	laz2xyz(FileName::AbstractString, outType::ASCIIString="Float32", outData::ASCIIString="xyz")
+	xyz2laz(FileName::AbstractString, xyz)
 
 	Where:
 		"FileName" Name of the output LIDAR file
-		"outType"  May either be "Float32" (default), "Float64" or "" (equivalent to Float32) and reprsents
-				   the output data type requested for the xyz components (LIDAR data may count to bilions points)
-		"outData"
-				   Select what data to output. The default is "xyz" meaning that only these three are sent out.
-				   All options include: "xyz", "xyzi", "xyzt", "xyzit" and "xyzti"
-				   where 'i' stands fot intensity (a UInt16) and 't' for GPS time (a Float64)
+		xyz  A Mx3 array with the point coordinates
 
-	The short version:
-		argsout = las2xyz(FileName::AbstractString, outData::ASCIIString="xyz")
-	is also valid and here the xyz data type defaults to Float32.
+Example. To write the x,y,z data to file "lixo.laz" do:
 
-Example. To read the x,y,z,t data from file "lixo.laz" do:
-
-	xyz, t = las2xyz("lixo.laz", "xyzt")
+	xyz2laz("lixo.laz", xyz)
 """
 
 function xyz2laz(fname::AbstractString, xyz)
@@ -30,14 +21,14 @@ function xyz2laz(fname::AbstractString, xyz)
 	#  Create the writer
 	laszip_writer = convert(Ptr{Ptr{Void}},pointer([pointer([0])]))
 	if (laszip_create(laszip_writer) != 0)
-		error("creating laszip writer")
+		msgerror(laszip_writer, "creating laszip writer")
 	end
 
 	header = pointer([pointer([create_empty_header()])])    # Get an empty header directly from C
 	laszip_writer = unsafe_load(laszip_writer)
 
 	if (laszip_get_header_pointer(laszip_writer, header) != 0)      # Get the header pointer
-		error("getting header pointer from laszip writer")
+		msgerror(laszip_writer, "getting header pointer from laszip writer")
 	end
 
 	hdr = unsafe_load(unsafe_load(header))      # Get back the straight type
@@ -62,16 +53,13 @@ function xyz2laz(fname::AbstractString, xyz)
 	unsafe_store!(unsafe_load(header), hdr)
 
 	if (laszip_open_writer(laszip_writer, fname, 1) != 0)
-		pStr = pointer([pointer(lpad("",256,"    "))])
-		laszip_get_error(laszip_writer, pStr)
-		Str = bytestring(unsafe_load(pStr))
-		error(@sprintf("opening laszip writer for %s\n\tMSG: %s", fname, Str))
+		msgerror(laszip_writer, @sprintf("opening laszip writer for %s", fname))
 	end
 
 	# Get a pointer to the points that will be written
 	point = pointer([pointer([create_empty_point()])])
 	if (laszip_get_point_pointer(laszip_writer, point) != 0)
-		error("getting point pointer from laszip writer")
+		msgerror(laszip_writer, "getting point pointer from laszip writer")
 	end
 	point = unsafe_load(point)
 
@@ -91,11 +79,11 @@ function xyz2laz(fname::AbstractString, xyz)
 
 	# Close the writer
 	if (laszip_close_writer(laszip_writer) != 0)
-		error("closing laszip writer")
+		msgerror(laszip_writer, "closing laszip writer")
 	end
 	# Destroy the writer
 	if (laszip_destroy(laszip_writer) != 0)
-		error("destroying laszip writer")
+		msgerror(laszip_writer, "destroying laszip writer")
 	end
 
 end
