@@ -32,5 +32,7 @@ export
 
 include("laszip_h.jl")
 include("laszip_dll.jl")
+include("laz2xyz.jl")
+include("xyz2laz.jl")
 
 end # module
