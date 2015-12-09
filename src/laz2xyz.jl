@@ -43,12 +43,12 @@ function laz2xyz(fname::AbstractString, outType::ASCIIString="Float32", argout::
 
 	laszip_reader = convert(Ptr{Ptr{Void}},pointer([pointer([0])]))
 	if (laszip_create(laszip_reader) != 0)
-		error("creating laszip reader")
+		msgerror(laszip_reader, "creating laszip reader")
 	end
 
 	is_compressed = pointer([Cint(0)]);
 	if ((laszip_open_reader(unsafe_load(laszip_reader), fname, is_compressed)) != 0)
-		error(@sprintf("opening laszip reader for file %s", fname))
+		msgerror(laszip_reader, @sprintf("opening laszip reader for file %s", fname))
 	end
 
 	#is_compressed = unsafe_load(is_compressed)		# If equal 1 file is compressed
@@ -57,13 +57,13 @@ function laz2xyz(fname::AbstractString, outType::ASCIIString="Float32", argout::
 	laszip_reader = unsafe_load(laszip_reader)
 
 	if (laszip_get_header_pointer(laszip_reader, header) != 0)		# Get header pointer
-		error("getting header pointer from laszip reader")
+		msgerror(laszip_reader, "getting header pointer from laszip reader")
 	end
 
 	# Get a pointer to the points that will be read
 	point = pointer([pointer([create_empty_point()])])
 	if (laszip_get_point_pointer(laszip_reader, point) != 0)
-		error("getting point pointer from laszip reader")
+		msgerror(laszip_reader, "getting point pointer from laszip reader")
 	end
 
 	header = unsafe_load(unsafe_load(header));
@@ -131,19 +131,19 @@ function laz2xyz(fname::AbstractString, outType::ASCIIString="Float32", argout::
 
 	if (header.x_scale_factor != 1)
 		for (k = 1:header.number_of_point_records)
-			xyz[k,1] /= header.x_scale_factor
-			xyz[k,2] /= header.y_scale_factor
-			xyz[k,3] /= header.z_scale_factor
+			xyz[k,1] *= header.x_scale_factor
+			xyz[k,2] *= header.y_scale_factor
+			xyz[k,3] *= header.z_scale_factor
 		end
 	end
 
 	# Close the reader
 	if (laszip_close_reader(laszip_reader) != 0)
-		error("closing laszip reader")
+		msgerror(laszip_reader, "closing laszip reader")
 	end
 	# Destroy the reader
 	if (laszip_destroy(laszip_reader) != 0)
-		error("destroying laszip reader")
+		msgerror(laszip_reader, "destroying laszip reader")
 	end
 
 	if (argout == "xyz")
