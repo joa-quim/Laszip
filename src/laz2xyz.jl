@@ -129,11 +129,35 @@ function laz2xyz(fname::AbstractString, outType::ASCIIString="Float32", argout::
 		end
 	end
 
-	if (header.x_scale_factor != 1)
+	# Try to do the minimum operations as needed when applying eventual Scale & Offset
+	if (header.x_scale_factor != 1 && (header.x_offset != 0 || header.y_offset != 0 || header.z_offset != 0))
+		# Scale and offset
+		for (k = 1:header.number_of_point_records)
+			xyz[k,1] *= header.x_scale_factor + header.x_offset
+			xyz[k,2] *= header.y_scale_factor + header.y_offset
+			xyz[k,3] *= header.z_scale_factor + header.z_offset
+		end
+	elseif (header.x_scale_factor != 1 && header.x_offset == 0 || header.y_offset == 0 || header.z_offset == 0)
+		# Scale only
 		for (k = 1:header.number_of_point_records)
 			xyz[k,1] *= header.x_scale_factor
 			xyz[k,2] *= header.y_scale_factor
 			xyz[k,3] *= header.z_scale_factor
+		end
+	elseif (header.x_scale_factor == 1 && (header.x_offset != 0 || header.y_offset != 0 || header.z_offset != 0))
+		# Offset only
+		for (k = 1:header.number_of_point_records)
+			xyz[k,1] += header.x_offset
+			xyz[k,2] += header.y_offset
+			xyz[k,3] += header.z_offset
+		end
+	elseif (header.x_scale_factor != 1 || header.y_scale_factor != 1 || header.z_scale_factor != 1 ||
+			header.x_offset != 0 || header.y_offset != 0 || header.z_offset != 0)
+		# Probably an unforeseen case above. Just do Scale and offset
+		for (k = 1:header.number_of_point_records)
+			xyz[k,1] *= header.x_scale_factor + header.x_offset
+			xyz[k,2] *= header.y_scale_factor + header.y_offset
+			xyz[k,3] *= header.z_scale_factor + header.z_offset
 		end
 	end
 
