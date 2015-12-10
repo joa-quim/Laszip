@@ -36,6 +36,7 @@ function xyz2laz(fname::AbstractString, xyz)
 	# Populate the header
 	hdr.version_major = 1
 	hdr.version_minor = 2
+	hdr.point_data_format = 1
 	hdr.number_of_point_records = n_rows
 	hdr.x_scale_factor = 1.0
 	hdr.y_scale_factor = 1.0
@@ -48,6 +49,27 @@ function xyz2laz(fname::AbstractString, xyz)
 	hdr.min_y = min_y
 	hdr.max_z = max_z
 	hdr.min_z = min_z
+
+	# ----------------- Find reasonable scale_factor and offset -----------------------------------------
+	if (hdr.min_x >= -360 && hdr.max_x <= 360 && hdr.min_y >= -90 && hdr.max_y <= 90)	# Assume geogs
+		hdr.x_scale_factor = 1e-7
+		hdr.y_scale_factor = 1e-7
+	else
+		hdr.x_scale_factor = 1e-3
+		hdr.y_scale_factor = 1e-3
+	end
+	hdr.z_scale_factor = 1e-3
+
+	if (!isnan(hdr.min_x) && isnan(!hdr.max_x))
+		hdr.x_offset = (floor((hdr.min_x + hdr.max_x)/hdr.x_scale_factor/20000000)) * 10000000 * hdr.x_scale_factor
+	end
+	if (!isnan(hdr.min_y) && isnan(!hdr.max_y))
+		hdr.y_offset = (floor((hdr.min_y + hdr.max_y)/hdr.y_scale_factor/20000000)) * 10000000 * hdr.y_scale_factor
+	end
+	if (!isnan(hdr.min_z) && isnan(!hdr.max_z))
+		hdr.z_offset = (floor((hdr.min_z + hdr.max_z)/hdr.z_scale_factor/20000000)) * 10000000 * hdr.z_scale_factor
+	end
+	# ---------------------------------------------------------------------------------------------------
 
 	# Save back the header to its C pointer
 	unsafe_store!(unsafe_load(header), hdr)
@@ -65,15 +87,15 @@ function xyz2laz(fname::AbstractString, xyz)
 
 	coordinates = zeros(3)
 	for (count = 1:n_rows)
-		#pt = unsafe_load(point)
-		#pt.X = round(Int32, xyz[count,1]*100)
-		#pt.Y = round(Int32, xyz[count,2]*100)
-		#pt.Z = round(Int32, xyz[count,3]*100)
-		#unsafe_store!(point, pt)
-		coordinates[1] = xyz[count,1]
-		coordinates[2] = xyz[count,2]
-		coordinates[3] = xyz[count,3]
-		laszip_set_coordinates(laszip_writer, convert(Ptr{Cdouble}, pointer(coordinates)))
+		pt = unsafe_load(point)
+		pt.X = round(Int32, (xyz[count,1]-hdr.x_offset) * hdr.x_scale_factor)
+		pt.Y = round(Int32, (xyz[count,2]-hdr.y_offset) * hdr.y_scale_factor)
+		pt.Z = round(Int32, (xyz[count,3]-hdr.z_offset) * hdr.z_scale_factor)
+		unsafe_store!(point, pt)
+		#coordinates[1] = xyz[count,1]
+		#coordinates[2] = xyz[count,2]
+		#coordinates[3] = xyz[count,3]
+		#laszip_set_coordinates(laszip_writer, convert(Ptr{Cdouble}, pointer(coordinates)))
 		laszip_write_point(laszip_writer)
 	end
 
