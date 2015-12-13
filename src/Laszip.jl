@@ -30,7 +30,7 @@ export
 	laszip_read_point,
 	laszip_close_reader,
 # Non C-wrapper functions
-	xyz2laz, laz2xyz, msgerror
+	xyz2laz, laz2xyz, msgerror, las2dat, dat2las
 
 include("laszip_h.jl")
 include("laszip_dll.jl")
@@ -56,6 +56,10 @@ function msgerror(lzobj::Ptr{Void}, extramsg::AbstractString="")
 	else
 		error(extramsg * "\n\t" * Str)
 	end
+end
+function msgerror(lzobj::Ptr{Ptr{Void}}, extramsg::AbstractString="")
+	lzobj = unsafe_load(lzobj)
+	msgerror(lzobj, extramsg)
 end
 
 end # module
