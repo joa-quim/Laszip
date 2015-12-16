@@ -310,8 +310,10 @@ function rebuild_grid(header, laszip_reader, point, z)
 	
 	# Now we have to find and throw away eventual extra values of the z vector
 	r = 3*header.number_of_point_records - n_rows * n_cols
-	if (r != 0)
-		z = z[1:end-r]
+	if (r == 1)
+		pop!(z)
+	elseif (r == 2)
+		pop!(z);	pop!(z)
 	end
 
 	z = reshape(z, n_rows, n_cols)
