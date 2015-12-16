@@ -19,7 +19,7 @@ Example. To write the x,y,z data to file "lixo.laz" do:
 
 function xyz2laz(fname::AbstractString, xyz, hdr_vec=[])
 
-	parse_inputs(xyz, hdr_vec)
+	parse_inputs_dat2las(xyz, hdr_vec)
 	n_rows, n_cols = size(xyz)
 
 	if (!isempty(hdr_vec))
@@ -32,7 +32,8 @@ function xyz2laz(fname::AbstractString, xyz, hdr_vec=[])
 		msgerror(laszip_writer, "creating laszip writer")
 	end
 
-	header = pointer([pointer([create_empty_header()])])    # Get an empty header directly from C
+	#header = pointer([pointer([create_empty_header()])])    # Get an empty header directly from C
+	header = pointer([pointer([create_header()])])    # Get an empty header directly from C
 	laszip_writer = unsafe_load(laszip_writer)
 
 	if (laszip_get_header_pointer(laszip_writer, header) != 0)      # Get the header pointer
@@ -111,7 +112,8 @@ function xyz2laz(fname::AbstractString, xyz, hdr_vec=[])
 	end
 
 	# Get a pointer to the points that will be written
-	point = pointer([pointer([create_empty_point()])])
+	#point = pointer([pointer([create_empty_point()])])
+	point = pointer([pointer([create_point()])])
 	if (laszip_get_point_pointer(laszip_writer, point) != 0)
 		msgerror(laszip_writer, "getting point pointer from laszip writer")
 	end
@@ -179,7 +181,7 @@ function xyz2laz(fname::AbstractString, xyz, hdr_vec=[])
 end
 
 # --------------------------------------------------------------------------
-function parse_inputs(xyz, hdr_vec=[])
+function parse_inputs_dat2las(xyz, hdr_vec=[])
 # Check validity of input and in future will parse string options
 
 	n_rows, n_cols = size(xyz)
