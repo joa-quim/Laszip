@@ -177,14 +177,23 @@ type laszip_header
 	min_y::Cdouble
 	max_z::Cdouble
 	min_z::Cdouble
+# LAS 1.3 and higher only
 	start_of_waveform_data_packet_record::Culonglong
+
+# LAS 1.4 and higher only
 	start_of_first_extended_variable_length_record::Culonglong
 	number_of_extended_variable_length_records::UInt32
 	extended_number_of_point_records::Culonglong
 	extended_number_of_points_by_return::Array_15_Culonglong
+
+# optional
 	user_data_in_header_size::UInt32
 	user_data_in_header::Ptr{Cuchar}
+
+# optional VLRs
 	vlrs::Ptr{laszip_vlr}
+
+# optional
 	user_data_after_header_size::UInt32
 	user_data_after_header::Ptr{Cuchar}
 end
@@ -198,6 +207,20 @@ end
 
 zero(::Type{Array_4_UInt16}) = begin  # /Users/j/.julia/v0.4/Clang/src/wrap_c.jl, line 266:
 		Array_4_UInt16(fill(zero(UInt16),4)...)
+	end
+
+immutable Array_7_Cuchar
+	d1::Cuchar
+	d2::Cuchar
+	d3::Cuchar
+	d4::Cuchar
+	d5::Cuchar
+	d6::Cuchar
+	d7::Cuchar
+end
+
+zero(::Type{Array_7_Cuchar}) = begin  # /Users/j/.julia/v0.4/Clang/src/wrap_c.jl, line 266:
+		Array_7_Cuchar(fill(zero(Cuchar),7)...)
 	end
 
 immutable Array_29_Cuchar
@@ -242,23 +265,29 @@ type laszip_point
 	Z::Cint
 	intensity::UInt16
 	return_number::Cuchar
-	number_of_returns_of_given_pulse::Cuchar
+	number_of_returns::Cuchar
 	scan_direction_flag::Cuchar
 	edge_of_flight_line::Cuchar
 	classification::Cuchar
+	synthetic_flag::Cuchar
+	keypoint_flag::Cuchar
+	withheld_flag::Cuchar
 	scan_angle_rank::UInt8
 	user_data::Cuchar
 	point_source_ID::UInt16
-	gps_time::Cdouble
-	rgb::Array_4_UInt16
-	wave_packet::Array_29_Cuchar
+# LAS 1.4 only
+	extended_scan_angle::Int16
 	extended_point_type::Cuchar
 	extended_scanner_channel::Cuchar
 	extended_classification_flags::Cuchar
 	extended_classification::Cuchar
 	extended_return_number::Cuchar
-	extended_number_of_returns_of_given_pulse::Cuchar
-	extended_scan_angle::Int16
+	extended_number_of_returns::Cuchar
+# for 8 byte alignment of the GPS time
+	dummy::Array_7_Cuchar
+	gps_time::Cdouble
+	rgb::Array_4_UInt16
+	wave_packet::Array_29_Cuchar
 	num_extra_bytes::Cint
 	extra_bytes::Ptr{Cuchar}
 end
