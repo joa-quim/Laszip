@@ -20,9 +20,9 @@ You can download it from [here](http://w3.ualg.pt/~jluis/ftp/laszip_dll_64.zip) 
 Using
 =====
 
-There are tho functions ``las2xyz`` and ``xyz2las`` to do read/write to the LAZ format. They are still ver basic
-but already allow you to read from a laz (laszip compressed of a las file).
+There are two functions ``las2dat`` and ``dat2las`` to do read/write to the LAZ format. They are still ver basic
+but already allow you to read from a laz (laszip compressed *las* file).
 
-    xyz = las2xyz("laszfile.laz");
+    xyz = las2dat("laszfile.laz");
 
 will return a point cloud on the *xyz* Mx3 array. See the function's online help for further options.
