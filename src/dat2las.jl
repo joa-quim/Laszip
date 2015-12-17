@@ -1,12 +1,9 @@
 using Laszip
-#using MutateIt
-
-dat2las(fname...) = xyz2laz(fname...)
 
 """
 Write XYZ data to a LIDAR laz (laszip compressed) or las format file. Usage:
 
-	xyz2laz(FileName::AbstractString, xyz)
+	dat2las(FileName::AbstractString, xyz)
 
 	Where:
 		"FileName" Name of the output LIDAR file
@@ -14,10 +11,10 @@ Write XYZ data to a LIDAR laz (laszip compressed) or las format file. Usage:
 
 Example. To write the x,y,z data to file "lixo.laz" do:
 
-	xyz2laz("lixo.laz", xyz)
+	dat2las("lixo.laz", xyz)
 """
 
-function xyz2laz(fname::AbstractString, xyz, hdr_vec=[]; scaleX=1, scaleY=1, scaleZ=1, offX=NaN, offY=NaN, offZ=NaN)
+function dat2las(fname::AbstractString, xyz, hdr_vec=[]; scaleX=1, scaleY=1, scaleZ=1, offX=NaN, offY=NaN, offZ=NaN)
 
 	parse_inputs_dat2las(xyz, hdr_vec)
 	n_rows, n_cols = size(xyz)
