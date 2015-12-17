@@ -34,8 +34,8 @@ export
 
 include("laszip_h.jl")
 include("laszip_dll.jl")
-include("laz2xyz.jl")
-include("xyz2laz.jl")
+include("las2dat.jl")
+include("dat2las.jl")
 
 """
 	Prints an laszip error message and error out
