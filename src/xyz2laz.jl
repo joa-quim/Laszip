@@ -17,7 +17,7 @@ Example. To write the x,y,z data to file "lixo.laz" do:
 	xyz2laz("lixo.laz", xyz)
 """
 
-function xyz2laz(fname::AbstractString, xyz, hdr_vec=[])
+function xyz2laz(fname::AbstractString, xyz, hdr_vec=[]; scaleX=1, scaleY=1, scaleZ=1, offX=NaN, offY=NaN, offZ=NaN)
 
 	parse_inputs_dat2las(xyz, hdr_vec)
 	n_rows, n_cols = size(xyz)
@@ -63,22 +63,44 @@ function xyz2laz(fname::AbstractString, xyz, hdr_vec=[])
 
 	# ----------------- Find reasonable scale_factor and offset -----------------------------------------
 	if (hdr.min_x >= -360 && hdr.max_x <= 360 && hdr.min_y >= -90 && hdr.max_y <= 90)	# Assume geogs
-		hdr.x_scale_factor = 1e-7
-		hdr.y_scale_factor = 1e-7
+		if (scaleX == 1)  hdr.x_scale_factor = 1e-7
+		else              hdr.x_scale_factor = scaleX
+		end
+		if (scaleY == 1)  hdr.y_scale_factor = 1e-7
+		else              hdr.y_scale_factor = scaleY
+		end
 	else
-		hdr.x_scale_factor = 1e-3
-		hdr.y_scale_factor = 1e-3
+		if (scaleX == 1)  hdr.x_scale_factor = 1e-3
+		else              hdr.x_scale_factor = scaleX
+		end
+		if (scaleY == 1)  hdr.y_scale_factor = 1e-3
+		else              hdr.y_scale_factor = scaleY
+		end
 	end
-	hdr.z_scale_factor = 1e-2
+	if (scaleZ == 1)  hdr.z_scale_factor = 1e-2
+	else              hdr.z_scale_factor = scaleZ
+	end
 
 	if (!isnan(hdr.min_x) && !isnan(hdr.max_x))
-		hdr.x_offset = (floor((hdr.min_x + hdr.max_x)/hdr.x_scale_factor/20000000)) * 10000000 * hdr.x_scale_factor
+		if (isnan(offX))
+			hdr.x_offset = (floor((hdr.min_x + hdr.max_x)/hdr.x_scale_factor/20000000)) * 10000000 * hdr.x_scale_factor
+		else
+			hdr.x_offset = offX
+		end
 	end
 	if (!isnan(hdr.min_y) && !isnan(hdr.max_y))
-		hdr.y_offset = (floor((hdr.min_y + hdr.max_y)/hdr.y_scale_factor/20000000)) * 10000000 * hdr.y_scale_factor
+		if (isnan(offY))
+			hdr.y_offset = (floor((hdr.min_y + hdr.max_y)/hdr.y_scale_factor/20000000)) * 10000000 * hdr.y_scale_factor
+		else
+			hdr.y_offset = offY
+		end
 	end
 	if (!isnan(hdr.min_z) && !isnan(hdr.max_z))
-		hdr.z_offset = (floor((hdr.min_z + hdr.max_z)/hdr.z_scale_factor/20000000)) * 10000000 * hdr.z_scale_factor
+		if (isnan(offZ))
+			hdr.z_offset = (floor((hdr.min_z + hdr.max_z)/hdr.z_scale_factor/20000000)) * 10000000 * hdr.z_scale_factor
+		else
+			hdr.z_offset = offZ
+		end
 	end
 	# ---------------------------------------------------------------------------------------------------
 
