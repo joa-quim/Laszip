@@ -3,7 +3,7 @@ using Laszip
 """
 Write XYZ data to a LIDAR laz (laszip compressed) or las format file. Usage:
 
-	dat2las(FileName::AbstractString, xyz)
+	dat2las(FileName::AbstractString, xyz, hdr_vec=[]; scaleX=[], scaleY=[]], scaleZ=[], offX=[], offY=[], offZ=[])
 
 	Where:
 		"FileName" Name of the output LIDAR file
@@ -14,7 +14,7 @@ Example. To write the x,y,z data to file "lixo.laz" do:
 	dat2las("lixo.laz", xyz)
 """
 
-function dat2las(fname::AbstractString, xyz, hdr_vec=[]; scaleX=1, scaleY=1, scaleZ=1, offX=NaN, offY=NaN, offZ=NaN)
+function dat2las(fname::AbstractString, xyz, hdr_vec=[]; scaleX=[], scaleY=[], scaleZ=[], offX=[], offY=[], offZ=[])
 
 	parse_inputs_dat2las(xyz, hdr_vec)
 	n_rows, n_cols = size(xyz)
@@ -60,40 +60,40 @@ function dat2las(fname::AbstractString, xyz, hdr_vec=[]; scaleX=1, scaleY=1, sca
 
 	# ----------------- Find reasonable scale_factor and offset -----------------------------------------
 	if (hdr.min_x >= -360 && hdr.max_x <= 360 && hdr.min_y >= -90 && hdr.max_y <= 90)	# Assume geogs
-		if (scaleX == 1)  hdr.x_scale_factor = 1e-7
-		else              hdr.x_scale_factor = scaleX
+		if (isempty(scaleX))  hdr.x_scale_factor = 1e-7
+		else                  hdr.x_scale_factor = scaleX
 		end
-		if (scaleY == 1)  hdr.y_scale_factor = 1e-7
-		else              hdr.y_scale_factor = scaleY
+		if (isempty(scaleY))  hdr.y_scale_factor = 1e-7
+		else                  hdr.y_scale_factor = scaleY
 		end
 	else
-		if (scaleX == 1)  hdr.x_scale_factor = 1e-3
-		else              hdr.x_scale_factor = scaleX
+		if (isempty(scaleY))  hdr.x_scale_factor = 1e-3
+		else                  hdr.x_scale_factor = scaleX
 		end
-		if (scaleY == 1)  hdr.y_scale_factor = 1e-3
-		else              hdr.y_scale_factor = scaleY
+		if (isempty(scaleY))  hdr.y_scale_factor = 1e-3
+		else                  hdr.y_scale_factor = scaleY
 		end
 	end
-	if (scaleZ == 1)  hdr.z_scale_factor = 1e-2
-	else              hdr.z_scale_factor = scaleZ
+	if (isempty(scaleZ))  hdr.z_scale_factor = 1e-2
+	else                  hdr.z_scale_factor = scaleZ
 	end
 
 	if (!isnan(hdr.min_x) && !isnan(hdr.max_x))
-		if (isnan(offX))
+		if (isempty(offX))
 			hdr.x_offset = (floor((hdr.min_x + hdr.max_x)/hdr.x_scale_factor/20000000)) * 10000000 * hdr.x_scale_factor
 		else
 			hdr.x_offset = offX
 		end
 	end
 	if (!isnan(hdr.min_y) && !isnan(hdr.max_y))
-		if (isnan(offY))
+		if (isempty(offY))
 			hdr.y_offset = (floor((hdr.min_y + hdr.max_y)/hdr.y_scale_factor/20000000)) * 10000000 * hdr.y_scale_factor
 		else
 			hdr.y_offset = offY
 		end
 	end
 	if (!isnan(hdr.min_z) && !isnan(hdr.max_z))
-		if (isnan(offZ))
+		if (isempty(offZ))
 			hdr.z_offset = (floor((hdr.min_z + hdr.max_z)/hdr.z_scale_factor/20000000)) * 10000000 * hdr.z_scale_factor
 		else
 			hdr.z_offset = offZ

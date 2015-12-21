@@ -5,41 +5,35 @@ laz2xyz(fname...) = las2dat(fname...)
 """
 Read data from a LIDAR laz (laszip compressed) or las format file. Usage:
 
-	argsout = las2dat(FileName::AbstractString, opts::ASCIIString="-Fxyz")
+	argsout = las2dat(FileName::AbstractString, whatout::ASCIIString="xyz"; outType="Float32", class=0, startstop="1:end")
 
 	Where:
 		"FileName" -> Name of the input LIDAR file
-		"opts"     -> "-F<args>" "-T64" "-Nstart/stop" "-Cclass"
-
-	            Select what data to output. The default is "-Fxyz" meaning that only these three are sent out.
-	            Some examples include: "-Fxyz", "-Fxy", "-Fyx", "-Fz", "-Fxyzi", "-Fxyzt", "-Fxyzit", "-Fxyzti"
-	                "-Fxyzic", "-Fxyzc", "-FRGB", "-FRGBI"
+		"whatout"  -> 
+	            Select what data to output. The default is "xyz" meaning that only these three are sent out.
+	            Some examples include: "xyz", "xy", "yx", "z", "xyzi", "xyzt", "xyzit", "xyzti", "xyzic" 
+	                "xyzc", "RGB", "RGBI"
 	            where 'i' stands for intensity (UInt16), 'c' for classification (Int8) and 't' for GPS time (Float64)
 
 	            The float components (xyz) may be required in Float32 (the default) or in Float64. That is
-	            controled by the -T option as in "-T64". This option adds to the components above and by
-	            leaving a space between option. Example: xyz = las2dat("lixo.laz", "-Fxyz -T64")
+	            controled by the 'outType' option.
 
-	            "-Nstart/stop" Restrict the output to the points from start to stop
+	            startstop="start:stop" Restrict the output to the points from start to stop
 
-	            "-Cclass"  Restrict the output to the points belonging to the classification 'class'
+	            "class=?"  Restrict the output to the points belonging to the classification 'class'
 	                       This option implies two passes, with the first for counting the number of points in class
-
-    The short version:
-	    argsout = las2dat(FileName::AbstractString)
-	is also valid and here the xyz data type defaults to Float32.
 
 	ARGSOUT is tuple with a Mx3 xyz array plus 't' and|or 'i' depending whether they were selected or not
 
 Example. To read the x,y,z,t data from file "lixo.laz" do:
 
-	xyz, t = las2dat("lixo.laz", "-Fxyzt")
+	xyz, t = las2dat("lixo.laz", "xyzt")
 """
 
-function las2dat(fname::AbstractString, opts::ASCIIString="-Fxyz")
+function las2dat(fname::AbstractString, whatout::ASCIIString="xyz"; outType="Float32", class=0, startstop="1:end")
 
-	if (isempty(opts))
-		error("Empty options string is BIG ERROR. Bye, Bye.")
+	if (isempty(whatout))
+		error("Empty output vars string is BIG ERROR. Bye, Bye.")
 	end
 
 	laszip_reader = convert(Ptr{Ptr{Void}},pointer([pointer([0])]))
@@ -71,16 +65,17 @@ function las2dat(fname::AbstractString, opts::ASCIIString="-Fxyz")
 
 	header = unsafe_load(unsafe_load(header))
 
-	# Input parsing ----------------------------------------------------------------------------------
-	argout, outType, class, firstPT, lastPT = parse_inputs_las2dat(header, point, laszip_reader, opts)
+	# Input parsing -------------------------------------------------------------------------------------
+	argout, firstPT, lastPT = parse_inputs_las2dat(header, point, laszip_reader, whatout,
+	                                                        class, startstop)
 	totalNP = lastPT - firstPT + 1
-	# ------------------------------------------------------------------------------------------------
+	# ---------------------------------------------------------------------------------------------------
 
-	# ----------- Check if we are reading a GRID pretendind to be a regular las file -------------
+	# ------------- Check if we are reading a GRID pretendind to be a regular las file -------------
 	#if (header.system_identifier.d1 == UInt8('G') && header.system_identifier.d2 == UInt8('R') &&
 	#    header.system_identifier.d3 == UInt8('D'))
 	fType = Float32
-	if (outType == 64)	fType = Float64		end
+	if (outType == "Float64")	fType = Float64		end
 
 	if (header.global_encoding == 32768)
 		argout = "g"
@@ -108,8 +103,13 @@ function las2dat(fname::AbstractString, opts::ASCIIString="-Fxyz")
 	end
 	#-------------------------------------------------------------------------------------------------
 
+	# CRUTIAL TODO ----------------------------
+	# if firstPT != 1 MUST SEEK FORWARD TILL IT
+	#------------------------------------------
+
+	coords = 1:3					# Default for whatout == "xyz" --- BUT NOT YET USED
 	if (argout == "xyz")
-		for (k = firstPT:lastPT)
+		for (k = 1:totalNP)
 			laszip_read_point(laszip_reader)
 			pt = unsafe_load(unsafe_load(point))
 			xyz[k,1]  = pt.X;	xyz[k,2]  = pt.Y;	xyz[k,3]  = pt.Z
@@ -117,39 +117,43 @@ function las2dat(fname::AbstractString, opts::ASCIIString="-Fxyz")
 	elseif (argout == "xy" || argout == "yx")
 		x = 1;	y = 2
 		if (argout == "yx") x = 2;	y = 1	end
-		for (k = firstPT:lastPT)
+		for (k = 1:totalNP)
 			laszip_read_point(laszip_reader)
 			pt = unsafe_load(unsafe_load(point))
 			xyz[k,x] = pt.X
 			xyz[k,y] = pt.Y
 		end
-	elseif (argout == 'x')
-		for (k = firstPT:lastPT)
+		coords = 1:2
+	elseif (argout == "x")
+		for (k = 1:totalNP)
 			laszip_read_point(laszip_reader)
 			pt = unsafe_load(unsafe_load(point))
 			xyz[k,1] = pt.X
 		end
-	elseif (argout == 'y')
-		for (k = firstPT:lastPT)
+		coords = 1:1
+	elseif (argout == "y")
+		for (k = 1:totalNP)
 			laszip_read_point(laszip_reader)
 			pt = unsafe_load(unsafe_load(point))
-			xyz[k,2] = pt.Y
+			xyz[k,1] = pt.Y
 		end
-	elseif (argout == 'z')
-		for (k = firstPT:lastPT)
+		coords = 2:2
+	elseif (argout == "z")
+		for (k = 1:totalNP)
 			laszip_read_point(laszip_reader)
 			pt = unsafe_load(unsafe_load(point))
-			xyz[k,3] = pt.Z
+			xyz[k,1] = pt.Z
 		end
+		coords = 3:3
 	elseif (argout == "xyzi")
-		for (k = firstPT:lastPT)
+		for (k = 1:totalNP)
 			laszip_read_point(laszip_reader)
 			pt = unsafe_load(unsafe_load(point))
 			xyz[k,1]  = pt.X;	xyz[k,2]  = pt.Y;	xyz[k,3]  = pt.Z
 			intens[k] = pt.intensity
 		end
 	elseif (argout == "xyzit")
-		for (k = firstPT:lastPT)
+		for (k = 1:totalNP)
 			laszip_read_point(laszip_reader)
 			pt = unsafe_load(unsafe_load(point))
 			xyz[k,1]  = pt.X;	xyz[k,2]  = pt.Y;	xyz[k,3]  = pt.Z
@@ -157,7 +161,7 @@ function las2dat(fname::AbstractString, opts::ASCIIString="-Fxyz")
 			tempo[k]  = pt.gps_time
 		end
 	elseif (argout == "xyzic")
-		for (k = firstPT:lastPT)
+		for (k = 1:totalNP)
 			laszip_read_point(laszip_reader)
 			pt = unsafe_load(unsafe_load(point))
 			xyz[k,1]  = pt.X;	xyz[k,2]  = pt.Y;	xyz[k,3]  = pt.Z
@@ -171,7 +175,7 @@ function las2dat(fname::AbstractString, opts::ASCIIString="-Fxyz")
 			end
 		end
 	elseif (argout == "xyzc")
-		for (k = firstPT:lastPT)
+		for (k = 1:totalNP)
 			laszip_read_point(laszip_reader)
 			pt = unsafe_load(unsafe_load(point))
 			xyz[k,1]  = pt.X;	xyz[k,2]  = pt.Y;	xyz[k,3]  = pt.Z
@@ -184,7 +188,7 @@ function las2dat(fname::AbstractString, opts::ASCIIString="-Fxyz")
 			end
 		end
 	elseif (argout == "xyzt")
-		for (k = firstPT:lastPT)
+		for (k = 1:totalNP)
 			laszip_read_point(laszip_reader)
 			pt = unsafe_load(unsafe_load(point))
 			xyz[k,1]  = pt.X;	xyz[k,2]  = pt.Y;	xyz[k,3]  = pt.Z
@@ -196,17 +200,19 @@ function las2dat(fname::AbstractString, opts::ASCIIString="-Fxyz")
 			pt = unsafe_load(unsafe_load(point))
 			RGB[k,1] = pt.rgb.d1;	RGB[k,2] = pt.rgb.d2;	RGB[k,3] = pt.rgb.d3
 		end
+		coords = 1:0
 	elseif (argout == "RGBI")
-		for (k = firstPT:lastPT)
+		for (k = 1:totalNP)
 			laszip_read_point(laszip_reader)
 			pt = unsafe_load(unsafe_load(point))
 			RGB[k,1] = pt.rgb.d1;	RGB[k,2] = pt.rgb.d2;	RGB[k,3] = pt.rgb.d3
 			RGB[k,4] = pt.rgb.d4
 		end
+		coords = 1:0
 	elseif (argout != "g")
 		# OK, here we have the generic but less efficient code (lots of IFs inside loops)
 		# AND THIS IS STILL NOT TAKEN INTO ACOUNT ON OUTPUT. SO BASICALLY IS A NON-WORKING CODE
-		for (k = firstPT:lastPT)
+		for (k = 1:totalNP)
 			laszip_read_point(laszip_reader)
 			pt = unsafe_load(unsafe_load(point))
 			for (n = 1:length(argout))
@@ -249,7 +255,7 @@ function las2dat(fname::AbstractString, opts::ASCIIString="-Fxyz")
 	if (argout == "g")
 		xyz,h = rebuild_grid(header, laszip_reader, point, xyz)
 	else
-		xyz = apply_scale_offset(header, xyz)
+		xyz = apply_scale_offset(header, xyz, coords, totalNP)
 	end
 
 	# Close the reader
@@ -313,7 +319,8 @@ function rebuild_grid(header, laszip_reader, point, z)
 	if (r == 1)
 		pop!(z)
 	elseif (r == 2)
-		pop!(z);	pop!(z)
+		pop!(z)
+		pop!(z)
 	end
 
 	z = reshape(z, n_rows, n_cols)
@@ -322,126 +329,108 @@ function rebuild_grid(header, laszip_reader, point, z)
 end
 
 # --------------------------------------------------------------------------------
-function apply_scale_offset(header, xyz)
-# ...
+function apply_scale_offset(header, xyz, coords, totalNP)
+# COORDS is a range of xyz (1:1 for "x", 1:2 for "xy", 3:3 for "z")
+
+	scale  = [header.x_scale_factor header.y_scale_factor header.z_scale_factor]
+	offset = [header.x_offset header.y_offset header.z_offset]
+	ncoord = length(coords)
+
 	if (header.x_scale_factor != 1 && (header.x_offset != 0 || header.y_offset != 0 || header.z_offset != 0))
 		# Scale and offset
-		for (k = 1:header.number_of_point_records)
-			xyz[k,1] = xyz[k,1] * header.x_scale_factor + header.x_offset
-			xyz[k,2] = xyz[k,2] * header.y_scale_factor + header.y_offset
-			xyz[k,3] = xyz[k,3] * header.z_scale_factor + header.z_offset
+		for (k = 1:totalNP)			# Loop over number of points
+			for (j = 1:ncoord)		# Loop over number of output coords
+				xyz[k,j] = xyz[k,j] * scale[coords[j]] + offset[coords[j]]
+				#xyz[k,1] = xyz[k,1] * header.x_scale_factor + header.x_offset
+				#xyz[k,2] = xyz[k,2] * header.y_scale_factor + header.y_offset
+				#xyz[k,3] = xyz[k,3] * header.z_scale_factor + header.z_offset
+			end
 		end
-	elseif (header.x_scale_factor != 1 && header.x_offset == 0 || header.y_offset == 0 || header.z_offset == 0)
-		# Scale only
-		for (k = 1:header.number_of_point_records)
-			xyz[k,1] *= header.x_scale_factor
-			xyz[k,2] *= header.y_scale_factor
-			xyz[k,3] *= header.z_scale_factor
-		end
-	elseif (header.x_scale_factor == 1 && (header.x_offset != 0 || header.y_offset != 0 || header.z_offset != 0))
-		# Offset only
-		for (k = 1:header.number_of_point_records)
-			xyz[k,1] += header.x_offset
-			xyz[k,2] += header.y_offset
-			xyz[k,3] += header.z_offset
+	elseif (header.x_scale_factor != 1 && header.x_offset == 0 && header.y_offset == 0 && header.z_offset == 0)
+		# Scale only (assume that if scale_x != 1 so are the other scales)
+		for (k = 1:totalNP)
+			for (j = 1:ncoord)		# Loop over number of output coords
+				xyz[k,j] *= scale[coords[j]]
+			end
 		end
 	elseif (header.x_scale_factor != 1 || header.y_scale_factor != 1 || header.z_scale_factor != 1 ||
 			header.x_offset != 0 || header.y_offset != 0 || header.z_offset != 0)
 		# Probably an unforeseen case above. Just do Scale and offset
-		for (k = 1:header.number_of_point_records)
-			xyz[k,1] = xyz[k,1] * header.x_scale_factor + header.x_offset
-			xyz[k,2] = xyz[k,2] * header.y_scale_factor + header.y_offset
-			xyz[k,3] = xyz[k,3] * header.z_scale_factor + header.z_offset
+		for (k = 1:totalNP)
+			for (j = 1:ncoord)		# Loop over number of output coords
+				xyz[k,j] = xyz[k,j] * scale[coords[j]] + offset[coords[j]]
+			end
 		end
 	end
 	return xyz
 end
 
 # --------------------------------------------------------------------------------------------
-function parse_inputs_las2dat(header, point, reader, opts)
+function parse_inputs_las2dat(header, point, reader, outpar, class, startstop)
 # Check validity of input and in future will parse string options
 
 	# Defaults
 	out = zeros(Int8,11)
-	outType = 32
-	class = 0
 	n_inClass = 0
 	firstPT = 1
 	lastPT  = header.number_of_point_records
 
-	ops = split(opts)
-	for (n = 1:length(ops))
-		if (ops[n][1:2] == "-F")			# What fields to output and in which order
-			i = 1
-			for (k = 3:length(ops[n]))
-				if (ops[n][k] == 'x')     out[i] = 'x';		i = i + 1
-				elseif (ops[n][k] == 'y') out[i] = 'y';		i = i + 1
-				elseif (ops[n][k] == 'z') out[i] = 'z';		i = i + 1
-				elseif (ops[n][k] == 'i') out[i] = 'i';		i = i + 1
-				elseif (ops[n][k] == 'c') out[i] = 'c';		i = i + 1
-				elseif (ops[n][k] == 'n') out[i] = 'n';		i = i + 1
-				elseif (ops[n][k] == 'R')
-					if (header.point_data_format != 2 && header.point_data_format != 3 && header.point_data_format != 5 &&
-						header.point_data_format != 7 && header.point_data_format != 8 && header.point_data_format != 10)
-						warn("requested 'R' but points do not have RGB. Ignoring it.")
-					else
-						out[i] = 'R';		i = i + 1
-					end
-				elseif (ops[n][k] == 'G')
-					if (header.point_data_format != 2 && header.point_data_format != 3 && header.point_data_format != 5 &&
-						header.point_data_format != 7 && header.point_data_format != 8 && header.point_data_format != 10)
-						warn("requested 'G' but points do not have RGB. Ignoring it.")
-					else
-						out[i] = 'G';		i = i + 1
-					end
-				elseif (ops[n][k] == 'B')
-					if (header.point_data_format != 2 && header.point_data_format != 3 && header.point_data_format != 5 &&
-						header.point_data_format != 7 && header.point_data_format != 8 && header.point_data_format != 10)
-						warn("requested 'B' but points do not have RGB. Ignoring it.")
-					else
-						out[i] = 'B';		i = i + 1
-					end
-				elseif (ops[n][k] == 'I')
-					if (header.point_data_format != 8 && header.point_data_format != 10)
-						warn("requested 'I' but points do not have RGBI. Ignoring it.")
-					else
-						out[i] = 'I';		i = i + 1
-					end
-				elseif (ops[n][k] == 't')
-					if (header.point_data_format != 1 && header.point_data_format != 3 &&
-						header.point_data_format != 4 && header.point_data_format != 5)
-						warn("requested 't' but points do not have gps time. Ignoring it.")
-					else
-						out[i] = 't';		i = i + 1
-					end
-				end
-			end
-		elseif (ops[n][1:2] == "-T")		# The output data type for floats
-			if (ops[n][3:end] == "64")
-				outType = 64
-			end
-		elseif (ops[n][1:2] == "-C")		# Restrict by classification
-			class = parse(Int,ops[n][3:end])
-			# And now check howm many of this class we have
-			n_inClass = 0		# Again so no funny plays with more than one -C
-			for (n = 1:header.number_of_point_records)
-				laszip_read_point(reader)
-				pt = unsafe_load(unsafe_load(point))
-				if (class == pt.classification) n_inClass = n_inClass + 1		end
-			end
-			# Here we must rewind the file, no?
-			laszip_seek_point(reader, 0)	# Is it this?
-		elseif (ops[n][1:2] == "-N")		# Restrict the output to -Nstart/end
-			ind = search(ops[n], '/')
-			if (ind != 0)
-				firstPT = parse(Int,ops[n][3:ind-1])
-				lastPT  = parse(Int,ops[n][ind+1:end])
+	i = 1
+	for (k = 1:length(outpar))
+		if (outpar[k] == 'x')     out[i] = 'x';		i = i + 1
+		elseif (outpar[k] == 'y') out[i] = 'y';		i = i + 1
+		elseif (outpar[k] == 'z') out[i] = 'z';		i = i + 1
+		elseif (outpar[k] == 'i') out[i] = 'i';		i = i + 1
+		elseif (outpar[k] == 'c') out[i] = 'c';		i = i + 1
+		elseif (outpar[k] == 'n') out[i] = 'n';		i = i + 1
+		elseif (outpar[k] == 'R')
+			if (header.point_data_format != 2 && header.point_data_format != 3 && header.point_data_format != 5 &&
+				header.point_data_format != 7 && header.point_data_format != 8 && header.point_data_format != 10)
+				warn("requested 'R' but points do not have RGB. Ignoring it.")
 			else
-				lastPT  = parse(Int,ops[n][3:end])
+				out[i] = 'R';		i = i + 1
 			end
-			if (firstPT > header.number_of_point_records)	firstPT = 1		end
-			if (lastPT  > header.number_of_point_records)	lastPT = header.number_of_point_records		end
+		elseif (outpar[k] == 'G')
+			if (header.point_data_format != 2 && header.point_data_format != 3 && header.point_data_format != 5 &&
+				header.point_data_format != 7 && header.point_data_format != 8 && header.point_data_format != 10)
+				warn("requested 'G' but points do not have RGB. Ignoring it.")
+			else
+				out[i] = 'G';		i = i + 1
+			end
+		elseif (outpar[k] == 'B')
+			if (header.point_data_format != 2 && header.point_data_format != 3 && header.point_data_format != 5 &&
+				header.point_data_format != 7 && header.point_data_format != 8 && header.point_data_format != 10)
+				warn("requested 'B' but points do not have RGB. Ignoring it.")
+			else
+				out[i] = 'B';		i = i + 1
+			end
+		elseif (outpar[k] == 'I')
+			if (header.point_data_format != 8 && header.point_data_format != 10)
+				warn("requested 'I' but points do not have RGBI. Ignoring it.")
+			else
+				out[i] = 'I';		i = i + 1
+			end
+		elseif (outpar[k] == 't')
+			if (header.point_data_format != 1 && header.point_data_format != 3 &&
+				header.point_data_format != 4 && header.point_data_format != 5)
+				warn("requested 't' but points do not have gps time. Ignoring it.")
+			else
+				out[i] = 't';		i = i + 1
+			end
 		end
+	end
+
+	# ------------------------------------ PARSE THE KEYWORD OPTIONS -----------------------------------------	
+	if (class != 0)
+		# And now check how many of this class we have
+		n_inClass = 0		# Again so no funny plays with more than one -C
+		for (n = 1:header.number_of_point_records)
+			laszip_read_point(reader)
+			pt = unsafe_load(unsafe_load(point))
+			if (class == pt.classification) n_inClass = n_inClass + 1		end
+		end
+		# Here we must rewind the file, no?
+		laszip_seek_point(reader, 0)	# Is it this?
 	end
 
 	if (class != 0 && n_inClass == 0)
@@ -449,7 +438,20 @@ function parse_inputs_las2dat(header, point, reader, opts)
 		class = 0
 	end
 
+	if (startstop != "1:end")
+		ind = search(startstop, ':')
+		if (ind != 0)
+			firstPT = parse(Int,startstop[1:ind-1])
+			lastPT  = parse(Int,startstop[ind+1:end])
+		else
+			lastPT  = parse(Int,startstop)
+		end
+		if (firstPT > header.number_of_point_records)	firstPT = 1		end
+		if (lastPT  > header.number_of_point_records)	lastPT = header.number_of_point_records		end
+	end
+	# --------------------------------------------------------------------------------------------------------
+
 	argout = bytestring(pointer(out))
-	return argout, outType, class, firstPT, lastPT
+	return argout, firstPT, lastPT
 end
 
