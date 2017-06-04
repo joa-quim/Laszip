@@ -4,19 +4,19 @@
 
 const OBJC_NEW_PROPERTIES = 1
 
-typealias laszip_BOOL Cint
-typealias laszip_U8 Cuchar
-typealias laszip_U16 UInt16
-typealias laszip_U32 UInt32
-typealias laszip_U64 Culonglong
-typealias laszip_I8 UInt8
-typealias laszip_I16 Int16
-typealias laszip_I32 Cint
-typealias laszip_I64 Clonglong
-typealias laszip_CHAR UInt8
-typealias laszip_F32 Cfloat
-typealias laszip_F64 Cdouble
-typealias laszip_POINTER Ptr{Void}
+const laszip_BOOL = Cint
+const laszip_U8   = Cuchar
+const laszip_U16  = UInt16
+const laszip_U32  = UInt32
+const laszip_U64  = Culonglong
+const laszip_I8   = UInt8
+const laszip_I16  = Int16
+const laszip_I32  = Cint
+const laszip_I64  = Clonglong
+const laszip_CHAR = UInt8
+const laszip_F32  = Cfloat
+const laszip_F64  = Cdouble
+const laszip_POINTER = Ptr{Void}
 
 type laszip_geokey
 	key_id::UInt16
