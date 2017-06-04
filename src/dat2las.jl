@@ -140,7 +140,7 @@ function dat2las(fname::AbstractString, xyz, hdr_vec=[]; scaleX=[], scaleY=[], s
 
 	coordinates = zeros(3)
 	if (n_cols == 3)
-		for (n = 1:n_rows)
+		for n = 1:n_rows
 			#=
 			pt = unsafe_load(point)
 			pt.X = round(Int32, (xyz[n,1]-hdr.x_offset) * hdr.x_scale_factor)
@@ -158,7 +158,7 @@ function dat2las(fname::AbstractString, xyz, hdr_vec=[]; scaleX=[], scaleY=[], s
 		# Deal with special case of a Z column only where will shit by splitting trhough the XYZ
 		r = rem(n_rows, 3)
 		last_ind = (r == 0 ? n_rows : n_rows - 1)
-		for (n = 1:3:last_ind)
+		for n = 1:3:last_ind
 			#pt = unsafe_load(point)
 			#pt.X = round(Int32, (xyz[n,1]-hdr.z_offset)   * hdr.z_scale_factor)
 			#pt.Y = round(Int32, (xyz[n+1,1]-hdr.z_offset) * hdr.z_scale_factor)

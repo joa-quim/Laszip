@@ -1,7 +1,7 @@
 # Julia wrapper for header: /Volumes/BOOTCAMP/programs/compa_libs/LASzip/dll/laszip_dll.h
 # Automatically generated using Clang.jl wrap_c, version 0.0.0
 
-WORD_SIZE == 64 ? suffixed_name = "laszip_w64" : suffixed_name = "laszip_w32"
+Sys.WORD_SIZE == 64 ? suffixed_name = "laszip_w64" : suffixed_name = "laszip_w32"
 const laszip = Libdl.find_library(["laszip", suffixed_name])
 #const laszip = "V:/LASzip/build/bin/laszip_w64"
 if isempty(laszip)
@@ -20,7 +20,7 @@ end
 function laszip_get_error(pointer::Ptr{Void}, error::Ptr{Ptr{UInt8}})
     ccall((:laszip_get_error,laszip),Cint,(Ptr{Void},Ptr{Ptr{UInt8}}),pointer,error)
 end
-function laszip_get_error(pointer::Ptr{Void}, error::Ptr{ASCIIString})
+function laszip_get_error(pointer::Ptr{Void}, error::Ptr{String})
     ccall((:laszip_get_error,laszip),Cint,(Ptr{Void},Ptr{Ptr{UInt8}}),pointer,error)
 end
 

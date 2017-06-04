@@ -5,7 +5,7 @@ laz2xyz(fname...) = las2dat(fname...)
 """
 Read data from a LIDAR laz (laszip compressed) or las format file. Usage:
 
-	argsout = las2dat(FileName::AbstractString, whatout::ASCIIString="xyz"; outType="Float32", class=0, startstop="1:end")
+	argsout = las2dat(FileName::AbstractString, whatout::String="xyz"; outType="Float32", class=0, startstop="1:end")
 
 	Where:
 		"FileName" -> Name of the input LIDAR file
@@ -30,7 +30,7 @@ Example. To read the x,y,z,t data from file "lixo.laz" do:
 	xyz, t = las2dat("lixo.laz", "xyzt")
 """
 
-function las2dat(fname::AbstractString, whatout::ASCIIString="xyz"; outType="Float32", class=0, startstop="1:end")
+function las2dat(fname::AbstractString, whatout::String="xyz"; outType="Float32", class=0, startstop="1:end")
 
 	if (isempty(whatout))
 		error("Empty output vars string is BIG ERROR. Bye, Bye.")
@@ -109,7 +109,7 @@ function las2dat(fname::AbstractString, whatout::ASCIIString="xyz"; outType="Flo
 
 	coords = 1:3					# Default for whatout == "xyz" --- BUT NOT YET USED
 	if (argout == "xyz")
-		for (k = 1:totalNP)
+		for k = 1:totalNP
 			laszip_read_point(laszip_reader)
 			pt = unsafe_load(unsafe_load(point))
 			xyz[k,1]  = pt.X;	xyz[k,2]  = pt.Y;	xyz[k,3]  = pt.Z
@@ -117,7 +117,7 @@ function las2dat(fname::AbstractString, whatout::ASCIIString="xyz"; outType="Flo
 	elseif (argout == "xy" || argout == "yx")
 		x = 1;	y = 2
 		if (argout == "yx") x = 2;	y = 1	end
-		for (k = 1:totalNP)
+		for k = 1:totalNP
 			laszip_read_point(laszip_reader)
 			pt = unsafe_load(unsafe_load(point))
 			xyz[k,x] = pt.X
@@ -125,35 +125,35 @@ function las2dat(fname::AbstractString, whatout::ASCIIString="xyz"; outType="Flo
 		end
 		coords = 1:2
 	elseif (argout == "x")
-		for (k = 1:totalNP)
+		for k = 1:totalNP
 			laszip_read_point(laszip_reader)
 			pt = unsafe_load(unsafe_load(point))
 			xyz[k,1] = pt.X
 		end
 		coords = 1:1
 	elseif (argout == "y")
-		for (k = 1:totalNP)
+		for k = 1:totalNP
 			laszip_read_point(laszip_reader)
 			pt = unsafe_load(unsafe_load(point))
 			xyz[k,1] = pt.Y
 		end
 		coords = 2:2
 	elseif (argout == "z")
-		for (k = 1:totalNP)
+		for k = 1:totalNP
 			laszip_read_point(laszip_reader)
 			pt = unsafe_load(unsafe_load(point))
 			xyz[k,1] = pt.Z
 		end
 		coords = 3:3
 	elseif (argout == "xyzi")
-		for (k = 1:totalNP)
+		for k = 1:totalNP
 			laszip_read_point(laszip_reader)
 			pt = unsafe_load(unsafe_load(point))
 			xyz[k,1]  = pt.X;	xyz[k,2]  = pt.Y;	xyz[k,3]  = pt.Z
 			intens[k] = pt.intensity
 		end
 	elseif (argout == "xyzit")
-		for (k = 1:totalNP)
+		for k = 1:totalNP
 			laszip_read_point(laszip_reader)
 			pt = unsafe_load(unsafe_load(point))
 			xyz[k,1]  = pt.X;	xyz[k,2]  = pt.Y;	xyz[k,3]  = pt.Z
@@ -161,7 +161,7 @@ function las2dat(fname::AbstractString, whatout::ASCIIString="xyz"; outType="Flo
 			tempo[k]  = pt.gps_time
 		end
 	elseif (argout == "xyzic")
-		for (k = 1:totalNP)
+		for k = 1:totalNP
 			laszip_read_point(laszip_reader)
 			pt = unsafe_load(unsafe_load(point))
 			xyz[k,1]  = pt.X;	xyz[k,2]  = pt.Y;	xyz[k,3]  = pt.Z
@@ -175,7 +175,7 @@ function las2dat(fname::AbstractString, whatout::ASCIIString="xyz"; outType="Flo
 			end
 		end
 	elseif (argout == "xyzc")
-		for (k = 1:totalNP)
+		for k = 1:totalNP
 			laszip_read_point(laszip_reader)
 			pt = unsafe_load(unsafe_load(point))
 			xyz[k,1]  = pt.X;	xyz[k,2]  = pt.Y;	xyz[k,3]  = pt.Z
@@ -188,21 +188,21 @@ function las2dat(fname::AbstractString, whatout::ASCIIString="xyz"; outType="Flo
 			end
 		end
 	elseif (argout == "xyzt")
-		for (k = 1:totalNP)
+		for k = 1:totalNP
 			laszip_read_point(laszip_reader)
 			pt = unsafe_load(unsafe_load(point))
 			xyz[k,1]  = pt.X;	xyz[k,2]  = pt.Y;	xyz[k,3]  = pt.Z
 			tempo[k] = pt.gps_time
 		end
 	elseif (argout == "RGB")
-		for (k = firstPT:lastPT)
+		for k = firstPT:lastPT
 			laszip_read_point(laszip_reader)
 			pt = unsafe_load(unsafe_load(point))
 			RGB[k,1] = pt.rgb.d1;	RGB[k,2] = pt.rgb.d2;	RGB[k,3] = pt.rgb.d3
 		end
 		coords = 1:0
 	elseif (argout == "RGBI")
-		for (k = 1:totalNP)
+		for k = 1:totalNP
 			laszip_read_point(laszip_reader)
 			pt = unsafe_load(unsafe_load(point))
 			RGB[k,1] = pt.rgb.d1;	RGB[k,2] = pt.rgb.d2;	RGB[k,3] = pt.rgb.d3
@@ -212,10 +212,10 @@ function las2dat(fname::AbstractString, whatout::ASCIIString="xyz"; outType="Flo
 	elseif (argout != "g")
 		# OK, here we have the generic but less efficient code (lots of IFs inside loops)
 		# AND THIS IS STILL NOT TAKEN INTO ACOUNT ON OUTPUT. SO BASICALLY IS A NON-WORKING CODE
-		for (k = 1:totalNP)
+		for k = 1:totalNP
 			laszip_read_point(laszip_reader)
 			pt = unsafe_load(unsafe_load(point))
-			for (n = 1:length(argout))
+			for n = 1:length(argout)
 				if (argout[n] == 'x')
 					xyz[k,1] = pt.X
 				elseif (argout[n] == 'y')
@@ -286,7 +286,7 @@ end
 function rebuild_grid(header, laszip_reader, point, z)
 # Recreate a 2D array plus a 1x9 header vector as used by GMT
 	n = 1;
-	for (k = 1:header.number_of_point_records)
+	for k = 1:header.number_of_point_records
 		laszip_read_point(laszip_reader)
 		pt = unsafe_load(unsafe_load(point))
 		z[n]    = pt.X
@@ -296,11 +296,11 @@ function rebuild_grid(header, laszip_reader, point, z)
 	end
 
 	if (header.z_scale_factor != 1 && header.z_offset != 0)
-		for (k = 1:3*header.number_of_point_records)
+		for k = 1:3*header.number_of_point_records
 			z[k] = z[k] * header.z_scale_factor + header.z_offset
 		end
 	elseif (header.z_scale_factor != 1 && header.z_offset == 0)
-		for (k = 1:3*header.number_of_point_records)
+		for k = 1:3*header.number_of_point_records
 			z[k] *= header.z_scale_factor
 		end
 	end
@@ -338,8 +338,8 @@ function apply_scale_offset(header, xyz, coords, totalNP)
 
 	if (header.x_scale_factor != 1 && (header.x_offset != 0 || header.y_offset != 0 || header.z_offset != 0))
 		# Scale and offset
-		for (k = 1:totalNP)			# Loop over number of points
-			for (j = 1:ncoord)		# Loop over number of output coords
+		for k = 1:totalNP			# Loop over number of points
+			for j = 1:ncoord		# Loop over number of output coords
 				xyz[k,j] = xyz[k,j] * scale[coords[j]] + offset[coords[j]]
 				#xyz[k,1] = xyz[k,1] * header.x_scale_factor + header.x_offset
 				#xyz[k,2] = xyz[k,2] * header.y_scale_factor + header.y_offset
@@ -348,16 +348,16 @@ function apply_scale_offset(header, xyz, coords, totalNP)
 		end
 	elseif (header.x_scale_factor != 1 && header.x_offset == 0 && header.y_offset == 0 && header.z_offset == 0)
 		# Scale only (assume that if scale_x != 1 so are the other scales)
-		for (k = 1:totalNP)
-			for (j = 1:ncoord)		# Loop over number of output coords
+		for k = 1:totalNP
+			for j = 1:ncoord		# Loop over number of output coords
 				xyz[k,j] *= scale[coords[j]]
 			end
 		end
 	elseif (header.x_scale_factor != 1 || header.y_scale_factor != 1 || header.z_scale_factor != 1 ||
 			header.x_offset != 0 || header.y_offset != 0 || header.z_offset != 0)
 		# Probably an unforeseen case above. Just do Scale and offset
-		for (k = 1:totalNP)
-			for (j = 1:ncoord)		# Loop over number of output coords
+		for k = 1:totalNP
+			for j = 1:ncoord		# Loop over number of output coords
 				xyz[k,j] = xyz[k,j] * scale[coords[j]] + offset[coords[j]]
 			end
 		end
@@ -376,7 +376,7 @@ function parse_inputs_las2dat(header, point, reader, outpar, class, startstop)
 	lastPT  = header.number_of_point_records
 
 	i = 1
-	for (k = 1:length(outpar))
+	for k = 1:length(outpar)
 		if (outpar[k] == 'x')     out[i] = 'x';		i = i + 1
 		elseif (outpar[k] == 'y') out[i] = 'y';		i = i + 1
 		elseif (outpar[k] == 'z') out[i] = 'z';		i = i + 1
@@ -424,7 +424,7 @@ function parse_inputs_las2dat(header, point, reader, outpar, class, startstop)
 	if (class != 0)
 		# And now check how many of this class we have
 		n_inClass = 0		# Again so no funny plays with more than one -C
-		for (n = 1:header.number_of_point_records)
+		for n = 1:header.number_of_point_records
 			laszip_read_point(reader)
 			pt = unsafe_load(unsafe_load(point))
 			if (class == pt.classification) n_inClass = n_inClass + 1		end
@@ -451,7 +451,8 @@ function parse_inputs_las2dat(header, point, reader, outpar, class, startstop)
 	end
 	# --------------------------------------------------------------------------------------------------------
 
-	argout = bytestring(pointer(out))
+	#argout = bytestring(pointer(out))
+	argout = unsafe_string(pointer(out))
 	return argout, firstPT, lastPT
 end
 
