@@ -451,7 +451,6 @@ function parse_inputs_las2dat(header, point, reader, outpar, class, startstop)
 	end
 	# --------------------------------------------------------------------------------------------------------
 
-	#argout = bytestring(pointer(out))
 	argout = unsafe_string(pointer(out))
 	return argout, firstPT, lastPT
 end

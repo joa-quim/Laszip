@@ -50,7 +50,7 @@ include("dat2las.jl")
 function msgerror(lzobj::Ptr{Void}, extramsg::AbstractString="")
 	pStr = pointer([pointer(lpad("",128,"        "))])		# Create a 1024 bytes string and get its pointer
 	laszip_get_error(lzobj, pStr)
-	Str = bytestring(unsafe_load(pStr))
+	Str = unsafe_string(unsafe_load(pStr))
 	if (isempty(extramsg))
 		error(Str)
 	else
