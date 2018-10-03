@@ -9,8 +9,7 @@ Julia wrapper for the [Laszip](http://www.laszip.org/) library
 Install
 =======
 
-    (Pkg.init()		# If you haven't done it yet)
-    Pkg.clone("git://github.com/joa-quim/Laszip.jl.git")
+    Pkg.add("git://github.com/joa-quim/Laszip.jl.git")
 
 For Windows you can download the laszip DLL from [here](http://w3.ualg.pt/~jluis/ftp/laszip_dll_64.zip)
 and make sure that the lib *laszip_w64.dll* is found by Julia. For unix, I'm afraid the user will to have
