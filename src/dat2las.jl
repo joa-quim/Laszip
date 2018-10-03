@@ -13,7 +13,6 @@ Example. To write the x,y,z data to file "lixo.laz" do:
 
 	dat2las("lixo.laz", xyz)
 """
-
 function dat2las(fname::AbstractString, xyz, hdr_vec=[]; scaleX=[], scaleY=[], scaleZ=[], offX=[], offY=[], offZ=[])
 
 	parse_inputs_dat2las(xyz, hdr_vec)
@@ -24,7 +23,7 @@ function dat2las(fname::AbstractString, xyz, hdr_vec=[]; scaleX=[], scaleY=[], s
 	end
 
 	#  Create the writer
-	laszip_writer = convert(Ptr{Ptr{Void}},pointer([pointer([0])]))
+	laszip_writer = convert(Ptr{Ptr{Cvoid}},pointer([pointer([0])]))
 	if (laszip_create(laszip_writer) != 0)
 		msgerror(laszip_writer, "creating laszip writer")
 	end
@@ -48,8 +47,8 @@ function dat2las(fname::AbstractString, xyz, hdr_vec=[]; scaleX=[], scaleY=[], s
 	hdr.y_scale_factor = 1.0
 	hdr.z_scale_factor = 1.0
 	if (n_cols == 3 && isempty(hdr_vec))		# The 'regular' situation
-		min_x, min_y, min_z = minimum(xyz, 1)
-		max_x, max_y, max_z = maximum(xyz, 1)
+		min_x, min_y, min_z = minimum(xyz, dims=1)
+		max_x, max_y, max_z = maximum(xyz, dims=1)
 	end
 	hdr.max_x = max_x
 	hdr.min_x = min_x

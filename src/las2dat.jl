@@ -9,9 +9,9 @@ Read data from a LIDAR laz (laszip compressed) or las format file. Usage:
 
 	Where:
 		"FileName" -> Name of the input LIDAR file
-		"whatout"  -> 
+		"whatout"  ->
 	            Select what data to output. The default is "xyz" meaning that only these three are sent out.
-	            Some examples include: "xyz", "xy", "yx", "z", "xyzi", "xyzt", "xyzit", "xyzti", "xyzic" 
+	            Some examples include: "xyz", "xy", "yx", "z", "xyzi", "xyzt", "xyzit", "xyzti", "xyzic"
 	                "xyzc", "RGB", "RGBI"
 	            where 'i' stands for intensity (UInt16), 'c' for classification (Int8) and 't' for GPS time (Float64)
 
@@ -29,14 +29,13 @@ Example. To read the x,y,z,t data from file "lixo.laz" do:
 
 	xyz, t = las2dat("lixo.laz", "xyzt")
 """
-
 function las2dat(fname::AbstractString, whatout::String="xyz"; outType="Float32", class=0, startstop="1:end")
 
 	if (isempty(whatout))
 		error("Empty output vars string is BIG ERROR. Bye, Bye.")
 	end
 
-	laszip_reader = convert(Ptr{Ptr{Void}},pointer([pointer([0])]))
+	laszip_reader = convert(Ptr{Ptr{Cvoid}},pointer([pointer([0])]))
 	if (laszip_create(laszip_reader) != 0)
 		msgerror(laszip_reader, "creating laszip reader")
 	end
@@ -66,8 +65,7 @@ function las2dat(fname::AbstractString, whatout::String="xyz"; outType="Float32"
 	header = unsafe_load(unsafe_load(header))
 
 	# Input parsing -------------------------------------------------------------------------------------
-	argout, firstPT, lastPT = parse_inputs_las2dat(header, point, laszip_reader, whatout,
-	                                                        class, startstop)
+	argout, firstPT, lastPT = parse_inputs_las2dat(header, point, laszip_reader, whatout, class, startstop)
 	totalNP = lastPT - firstPT + 1
 	# ---------------------------------------------------------------------------------------------------
 
@@ -82,19 +80,19 @@ function las2dat(fname::AbstractString, whatout::String="xyz"; outType="Float32"
 		xyz = zeros(fType, lastPT * 3, 1)
 	else
 		# ------ Pre-allocations ---------------------------------------------------------------------
-		if (!isempty(search(argout,"xyz")) || !isempty(search(argout,"yxz")))
+		if (occursin("xyz", argout) || occursin("yxz", argout))
 			xyz = zeros(fType, totalNP, 3)
-		elseif (!isempty(search(argout,"xy")) || !isempty(search(argout,"yx")))
+		elseif (occursin("xy", argout) || occursin("yx", argout))
 			xyz = zeros(fType, totalNP, 2)
-		elseif (!isempty(search(argout,"x")) || !isempty(search(argout,"y")) || !isempty(search(argout,"z")))
+		elseif (occursin("x", argout) || occursin("y", argout) || occursin("z", argout))
 			xyz = zeros(fType, totalNP, 1)
 		end
-		if (search(argout,'i') != 0)	intens = zeros(UInt16,  totalNP, 1)	end
-		if (search(argout,'t') != 0)	tempo  = zeros(Float64, totalNP, 1)	end
-		if (search(argout,'c') != 0)	class  = zeros(Int8,    totalNP, 1)	end
-		if (search(argout,'n') != 0)	n_ret  = zeros(Int8,    totalNP, 1)	end
-		if (search(argout,'R') != 0 || search(argout,'G') != 0 || search(argout,'B') != 0)
-			if (search(argout,'I') != 0)
+		if (occursin('i', argout) != 0)	intens = zeros(UInt16,  totalNP, 1)	end
+		if (occursin('t', argout) != 0)	tempo  = zeros(Float64, totalNP, 1)	end
+		if (occursin('c', argout) != 0)	class  = zeros(Int8,    totalNP, 1)	end
+		if (occursin('n', argout) != 0)	n_ret  = zeros(Int8,    totalNP, 1)	end
+		if (occursin('R', argout) != 0 || occursin('G', argout) != 0 || occursin('B', argout) != 0)
+			if (occursin('I', argout) != 0)
 				RGB = zeros(UInt16,   totalNP, 4)
 			else
 				RGB = zeros(UInt16,   totalNP, 3)
@@ -313,7 +311,7 @@ function rebuild_grid(header, laszip_reader, point, z)
 	n_cols = Int(header.project_ID_GUID_data_3)
 	x_inc  = (header.max_x - header.min_x) / (n_cols - one)
 	y_inc  = (header.max_y - header.min_y) / (n_rows - one)
-	
+
 	# Now we have to find and throw away eventual extra values of the z vector
 	r = 3*header.number_of_point_records - n_rows * n_cols
 	if (r == 1)
@@ -386,41 +384,41 @@ function parse_inputs_las2dat(header, point, reader, outpar, class, startstop)
 		elseif (outpar[k] == 'R')
 			if (header.point_data_format != 2 && header.point_data_format != 3 && header.point_data_format != 5 &&
 				header.point_data_format != 7 && header.point_data_format != 8 && header.point_data_format != 10)
-				warn("requested 'R' but points do not have RGB. Ignoring it.")
+				@warn("requested 'R' but points do not have RGB. Ignoring it.")
 			else
 				out[i] = 'R';		i = i + 1
 			end
 		elseif (outpar[k] == 'G')
 			if (header.point_data_format != 2 && header.point_data_format != 3 && header.point_data_format != 5 &&
 				header.point_data_format != 7 && header.point_data_format != 8 && header.point_data_format != 10)
-				warn("requested 'G' but points do not have RGB. Ignoring it.")
+				@warn("requested 'G' but points do not have RGB. Ignoring it.")
 			else
 				out[i] = 'G';		i = i + 1
 			end
 		elseif (outpar[k] == 'B')
 			if (header.point_data_format != 2 && header.point_data_format != 3 && header.point_data_format != 5 &&
 				header.point_data_format != 7 && header.point_data_format != 8 && header.point_data_format != 10)
-				warn("requested 'B' but points do not have RGB. Ignoring it.")
+				@warn("requested 'B' but points do not have RGB. Ignoring it.")
 			else
 				out[i] = 'B';		i = i + 1
 			end
 		elseif (outpar[k] == 'I')
 			if (header.point_data_format != 8 && header.point_data_format != 10)
-				warn("requested 'I' but points do not have RGBI. Ignoring it.")
+				@warn("requested 'I' but points do not have RGBI. Ignoring it.")
 			else
 				out[i] = 'I';		i = i + 1
 			end
 		elseif (outpar[k] == 't')
 			if (header.point_data_format != 1 && header.point_data_format != 3 &&
 				header.point_data_format != 4 && header.point_data_format != 5)
-				warn("requested 't' but points do not have gps time. Ignoring it.")
+				@warn("requested 't' but points do not have gps time. Ignoring it.")
 			else
 				out[i] = 't';		i = i + 1
 			end
 		end
 	end
 
-	# ------------------------------------ PARSE THE KEYWORD OPTIONS -----------------------------------------	
+	# ------------------------------------ PARSE THE KEYWORD OPTIONS -----------------------------------------
 	if (class != 0)
 		# And now check how many of this class we have
 		n_inClass = 0		# Again so no funny plays with more than one -C
@@ -434,12 +432,12 @@ function parse_inputs_las2dat(header, point, reader, outpar, class, startstop)
 	end
 
 	if (class != 0 && n_inClass == 0)
-		warn("Requested a class but no points inside that class. Ignoring the class request to avoid error.")
+		@warn("Requested a class but no points inside that class. Ignoring the class request to avoid error.")
 		class = 0
 	end
 
 	if (startstop != "1:end")
-		ind = search(startstop, ':')
+		ind = something(findfirst(isequal(':'), startstop), 0)
 		if (ind != 0)
 			firstPT = parse(Int,startstop[1:ind-1])
 			lastPT  = parse(Int,startstop[ind+1:end])
@@ -454,4 +452,3 @@ function parse_inputs_las2dat(header, point, reader, outpar, class, startstop)
 	argout = unsafe_string(pointer(out))
 	return argout, firstPT, lastPT
 end
-

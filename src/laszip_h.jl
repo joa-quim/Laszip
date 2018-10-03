@@ -16,16 +16,16 @@ const laszip_I64  = Clonglong
 const laszip_CHAR = UInt8
 const laszip_F32  = Cfloat
 const laszip_F64  = Cdouble
-const laszip_POINTER = Ptr{Void}
+const laszip_POINTER = Ptr{Cvoid}
 
-type laszip_geokey
+mutable struct laszip_geokey
 	key_id::UInt16
 	tiff_tag_location::UInt16
 	count::UInt16
 	value_offset::UInt16
 end
 
-immutable Array_16_UInt8
+struct Array_16_UInt8
 	d1::UInt8
 	d2::UInt8
 	d3::UInt8
@@ -48,7 +48,7 @@ zero(::Type{Array_16_UInt8}) = begin  # /Users/j/.julia/v0.4/Clang/src/wrap_c.jl
 		Array_16_UInt8(fill(zero(UInt8),16)...)
 	end
 
-immutable Array_32_UInt8
+struct Array_32_UInt8
 	d1::UInt8
 	d2::UInt8
 	d3::UInt8
@@ -87,7 +87,7 @@ zero(::Type{Array_32_UInt8}) = begin  # /Users/j/.julia/v0.4/Clang/src/wrap_c.jl
 		Array_32_UInt8(fill(zero(UInt8),32)...)
 	end
 
-type laszip_vlr
+mutable struct laszip_vlr
 	reserved::UInt16
 	user_id::Array_16_UInt8
 	record_id::UInt16
@@ -96,7 +96,7 @@ type laszip_vlr
 	data::Ptr{Cuchar}
 end
 
-immutable Array_8_UInt8
+struct Array_8_UInt8
 	d1::UInt8
 	d2::UInt8
 	d3::UInt8
@@ -111,7 +111,7 @@ zero(::Type{Array_8_UInt8}) = begin  # /Users/j/.julia/v0.4/Clang/src/wrap_c.jl,
 		Array_8_UInt8(fill(zero(UInt8),8)...)
 	end
 
-immutable Array_5_UInt32
+struct Array_5_UInt32
 	d1::UInt32
 	d2::UInt32
 	d3::UInt32
@@ -123,7 +123,7 @@ zero(::Type{Array_5_UInt32}) = begin  # /Users/j/.julia/v0.4/Clang/src/wrap_c.jl
 		Array_5_UInt32(fill(zero(UInt32),5)...)
 	end
 
-immutable Array_15_Culonglong
+struct Array_15_Culonglong
 	d1::Culonglong
 	d2::Culonglong
 	d3::Culonglong
@@ -145,7 +145,7 @@ zero(::Type{Array_15_Culonglong}) = begin  # /Users/j/.julia/v0.4/Clang/src/wrap
 		Array_15_Culonglong(fill(zero(Culonglong),15)...)
 	end
 
-type laszip_header
+mutable struct laszip_header
 	file_source_ID::UInt16
 	global_encoding::UInt16
 	project_ID_GUID_data_1::UInt32
@@ -198,7 +198,7 @@ type laszip_header
 	user_data_after_header::Ptr{Cuchar}
 end
 
-immutable Array_4_UInt16
+struct Array_4_UInt16
 	d1::UInt16
 	d2::UInt16
 	d3::UInt16
@@ -209,7 +209,7 @@ zero(::Type{Array_4_UInt16}) = begin  # /Users/j/.julia/v0.4/Clang/src/wrap_c.jl
 		Array_4_UInt16(fill(zero(UInt16),4)...)
 	end
 
-immutable Array_7_Cuchar
+struct Array_7_Cuchar
 	d1::Cuchar
 	d2::Cuchar
 	d3::Cuchar
@@ -223,7 +223,7 @@ zero(::Type{Array_7_Cuchar}) = begin  # /Users/j/.julia/v0.4/Clang/src/wrap_c.jl
 		Array_7_Cuchar(fill(zero(Cuchar),7)...)
 	end
 
-immutable Array_29_Cuchar
+struct Array_29_Cuchar
 	d1::Cuchar
 	d2::Cuchar
 	d3::Cuchar
@@ -259,7 +259,7 @@ zero(::Type{Array_29_Cuchar}) = begin  # /Users/j/.julia/v0.4/Clang/src/wrap_c.j
 		Array_29_Cuchar(fill(zero(Cuchar),29)...)
 	end
 
-type laszip_point
+mutable struct laszip_point
 	X::Cint
 	Y::Cint
 	Z::Cint
@@ -293,7 +293,7 @@ type laszip_point
 end
 
 #=
-type laszip_dll
+mutable struct laszip_dll
 	header::laszip_header
 	p_count::Clonglong
 	npoints::Clonglong
@@ -304,7 +304,7 @@ type laszip_dll
 	LASreadPoint* reader;
 	ByteStreamOut* streamout;
 	LASwritePoint* writer;
-	CHAR error[1024]; 
-	CHAR warning[1024]; 
+	CHAR error[1024];
+	CHAR warning[1024];
 end
 =#

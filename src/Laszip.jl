@@ -1,5 +1,7 @@
 module Laszip
 
+using Printf
+
 export
 	create_empty_header, create_empty_point, create_empty_vlr,
 	laszip_get_point_pointer, laszip_get_header_pointer,
@@ -46,8 +48,7 @@ include("dat2las.jl")
 		"lzobj" is a pointer to laszip_readert|writer created by unsafe_load(laszip_create(arg))
 		"extramsg" is an optional extra message to be printed before the laszip error message.
 """
-
-function msgerror(lzobj::Ptr{Void}, extramsg::AbstractString="")
+function msgerror(lzobj::Ptr{Cvoid}, extramsg::AbstractString="")
 	pStr = pointer([pointer(lpad("",128,"        "))])		# Create a 1024 bytes string and get its pointer
 	laszip_get_error(lzobj, pStr)
 	Str = unsafe_string(unsafe_load(pStr))
@@ -57,7 +58,7 @@ function msgerror(lzobj::Ptr{Void}, extramsg::AbstractString="")
 		error(extramsg * "\n\t" * Str)
 	end
 end
-function msgerror(lzobj::Ptr{Ptr{Void}}, extramsg::AbstractString="")
+function msgerror(lzobj::Ptr{Ptr{Cvoid}}, extramsg::AbstractString="")
 	lzobj = unsafe_load(lzobj)
 	msgerror(lzobj, extramsg)
 end
@@ -84,7 +85,6 @@ function create_header(project_ID_GUID_data_4="", system_identifier="", generati
 	                     0., 0., 0., 0., 0., 0., 0, 0, 0, 0, extended_number_of_points_by_return,
 	                     0, user_data_in_header, vlrs, 0, user_data_after_header)
 end
-
 
 # ---------------------------------------------------------------------------------------------
 function create_point()
