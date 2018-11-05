@@ -3,7 +3,7 @@ using Laszip
 """
 Write XYZ data to a LIDAR laz (laszip compressed) or las format file. Usage:
 
-	dat2las(FileName::AbstractString, xyz, hdr_vec=[]; scaleX=[], scaleY=[]], scaleZ=[], offX=[], offY=[], offZ=[])
+	dat2las(FileName::AbstractString, xyz, hdr_vec=[]; scaleX=[], scaleY=[], scaleZ=[], offX=[], offY=[], offZ=[])
 
 	Where:
 		"FileName" Name of the output LIDAR file
@@ -154,7 +154,7 @@ function dat2las(fname::AbstractString, xyz, hdr_vec=[]; scaleX=[], scaleY=[], s
 			laszip_write_point(laszip_writer)
 		end
 	else
-		# Deal with special case of a Z column only where will shit by splitting trhough the XYZ
+		# Deal with special case of a Z column only where we will cheat by splitting trhough the XYZ
 		r = rem(n_rows, 3)
 		last_ind = (r == 0 ? n_rows : n_rows - 1)
 		for n = 1:3:last_ind
