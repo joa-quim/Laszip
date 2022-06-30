@@ -1,11 +1,10 @@
 # Julia wrapper for header: /Volumes/BOOTCAMP/programs/compa_libs/thelib/dll/laszip_dll.h
 # Automatically generated using Clang.jl wrap_c, version 0.0.0
 
-using Libdl
+#using Libdl
 
-@static Sys.iswindows() ? (Sys.WORD_SIZE == 64 ? (const suffixed_name = "laszip_w64") : (const suffixed_name = "laszip_w32")) : (const suffixed_name = "laszip")
-const thelib = Libdl.find_library(["laszip", suffixed_name])
-#const thelib = "V:/laszip/build/bin/laszip_w64"
+@static Sys.iswindows() ? (Sys.WORD_SIZE == 64 ? (const thelib = "laszip_w64") : (const thelib = "laszip_w32")) : (const thelib = "liblaszip")
+#const thelib = Libdl.find_library(["laszip", suffixed_name])
 
 if isempty(thelib)
     error("could not find thelib library")

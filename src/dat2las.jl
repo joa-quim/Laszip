@@ -28,8 +28,7 @@ function dat2las(fname::AbstractString, xyz, hdr_vec=[]; scaleX=[], scaleY=[], s
 		msgerror(laszip_writer, "creating laszip writer")
 	end
 
-	#header = pointer([pointer([create_empty_header()])])    # Get an empty header directly from C
-	header = pointer([pointer([create_header()])])    # Get an empty header directly from C
+	header = pointer([pointer([laszip_header()])])    # Get an empty header directly from C
 	laszip_writer = unsafe_load(laszip_writer)
 
 	if (laszip_get_header_pointer(laszip_writer, header) != 0)      # Get the header pointer
@@ -111,15 +110,8 @@ function dat2las(fname::AbstractString, xyz, hdr_vec=[]; scaleX=[], scaleY=[], s
 
 		one = (hdr_vec[7] == 0 ? 1 : 0)
 		hdr.project_ID_GUID_data_1 = hdr_vec[7]
-		hdr.project_ID_GUID_data_2 = round(Int, (hdr.max_y - hdr.min_y) / hdr_vec[8]) + one 	# n_rows in 2D array
-		hdr.project_ID_GUID_data_3 = round(Int, (hdr.max_x - hdr.min_x) / hdr_vec[9]) + one 	# n_cols in 2D array
-
-		#hdr.system_identifier.d1 = UInt8('G')	# This is ugly. There must be a better way
-		#hdr.system_identifier.d2 = UInt8('R')
-		#hdr.system_identifier.d3 = UInt8('D')
-		#mutateit(hdr.system_identifier, "d1", 'G')
-		#mutateit(hdr.system_identifier, "d2", 'R')
-		#mutateit(hdr.system_identifier, "d3", 'D')
+		hdr.project_ID_GUID_data_2 = round(UInt16, (hdr.max_y - hdr.min_y) / hdr_vec[8]) + one 	# n_rows in 2D array
+		hdr.project_ID_GUID_data_3 = round(UInt16, (hdr.max_x - hdr.min_x) / hdr_vec[9]) + one 	# n_cols in 2D array
 	end
 
 	# Save back the header to its C pointer
@@ -130,8 +122,7 @@ function dat2las(fname::AbstractString, xyz, hdr_vec=[]; scaleX=[], scaleY=[], s
 	end
 
 	# Get a pointer to the points that will be written
-	#point = pointer([pointer([create_empty_point()])])
-	point = pointer([pointer([create_point()])])
+	point = pointer([pointer([laszip_point()])])
 	if (laszip_get_point_pointer(laszip_writer, point) != 0)
 		msgerror(laszip_writer, "getting point pointer from laszip writer")
 	end
@@ -199,16 +190,14 @@ function dat2las(fname::AbstractString, xyz, hdr_vec=[]; scaleX=[], scaleY=[], s
 end
 
 # --------------------------------------------------------------------------
-function parse_inputs_dat2las(xyz, hdr_vec=[])
+function parse_inputs_dat2las(xyz, hdr_vec)
 # Check validity of input and in future will parse string options
 
 	n_rows, n_cols = size(xyz)
-	if ((n_cols != 3 && n_cols != 1))
-		error("Input array can only have 1 or 3 columns OR be a 2D array")
-	end
+	((n_cols != 3 && n_cols != 1)) && error("Input array can only have 1 or 3 columns OR be a 2D array")
 	if (!isempty(hdr_vec))
-		if (length(hdr_vec) < 7)
-			error("HDR argument does not have at least 7 elements")
-		end
+		(length(hdr_vec) < 7) && error("HDR argument does not have at least 7 elements")
 	end
 end
+
+const xyz2laz  = dat2las			# Alias

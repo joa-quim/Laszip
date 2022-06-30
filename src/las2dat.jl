@@ -1,7 +1,3 @@
-using Laszip
-
-laz2xyz(fname...) = las2dat(fname...)
-
 """
 Read data from a LIDAR laz (laszip compressed) or las format file. Usage:
 
@@ -31,9 +27,7 @@ Example. To read the x,y,z,t data from file "lixo.laz" do:
 """
 function las2dat(fname::AbstractString, whatout::String="xyz"; outType="Float32", class=0, startstop="1:end")
 
-	if (isempty(whatout))
-		error("Empty output vars string is BIG ERROR. Bye, Bye.")
-	end
+	(isempty(whatout)) && error("Empty output vars string is BIG ERROR. Bye, Bye.")
 
 	laszip_reader = convert(Ptr{Ptr{Cvoid}},pointer([pointer([0])]))
 	if (laszip_create(laszip_reader) != 0)
@@ -47,8 +41,7 @@ function las2dat(fname::AbstractString, whatout::String="xyz"; outType="Float32"
 
 	#is_compressed = unsafe_load(is_compressed)		# If equal 1 file is compressed
 
-	#header = pointer([pointer([create_empty_header()])])
-	header = pointer([pointer([create_header()])])
+	header = pointer([pointer([laszip_header()])])
 	laszip_reader = unsafe_load(laszip_reader)
 
 	if (laszip_get_header_pointer(laszip_reader, header) != 0)		# Get header pointer
@@ -56,8 +49,7 @@ function las2dat(fname::AbstractString, whatout::String="xyz"; outType="Float32"
 	end
 
 	# Get a pointer to the points that will be read
-	#point = pointer([pointer([create_empty_point()])])
-	point = pointer([pointer([create_point()])])
+	point = pointer([pointer([laszip_point()])])
 	if (laszip_get_point_pointer(laszip_reader, point) != 0)
 		msgerror(laszip_reader, "getting point pointer from laszip reader")
 	end
@@ -73,7 +65,7 @@ function las2dat(fname::AbstractString, whatout::String="xyz"; outType="Float32"
 	#if (header.system_identifier.d1 == UInt8('G') && header.system_identifier.d2 == UInt8('R') &&
 	#    header.system_identifier.d3 == UInt8('D'))
 	fType = Float32
-	if (outType == "Float64")	fType = Float64		end
+	(outType == "Float64") && (fType = Float64)
 
 	if (header.global_encoding == 32768)
 		argout = "g"
@@ -92,11 +84,7 @@ function las2dat(fname::AbstractString, whatout::String="xyz"; outType="Float32"
 		if (occursin('c', argout) != 0)	class  = zeros(Int8,    totalNP, 1)	end
 		if (occursin('n', argout) != 0)	n_ret  = zeros(Int8,    totalNP, 1)	end
 		if (occursin('R', argout) != 0 || occursin('G', argout) != 0 || occursin('B', argout) != 0)
-			if (occursin('I', argout) != 0)
-				RGB = zeros(UInt16,   totalNP, 4)
-			else
-				RGB = zeros(UInt16,   totalNP, 3)
-			end
+			RGB = (occursin('I', argout) != 0) ? zeros(UInt16, totalNP, 4) : zeros(UInt16, totalNP, 3)
 		end
 	end
 	#-------------------------------------------------------------------------------------------------
@@ -375,45 +363,45 @@ function parse_inputs_las2dat(header, point, reader, outpar, class, startstop)
 
 	i = 1
 	for k = 1:length(outpar)
-		if (outpar[k] == 'x')     out[i] = 'x';		i = i + 1
-		elseif (outpar[k] == 'y') out[i] = 'y';		i = i + 1
-		elseif (outpar[k] == 'z') out[i] = 'z';		i = i + 1
-		elseif (outpar[k] == 'i') out[i] = 'i';		i = i + 1
-		elseif (outpar[k] == 'c') out[i] = 'c';		i = i + 1
-		elseif (outpar[k] == 'n') out[i] = 'n';		i = i + 1
+		if (outpar[k] == 'x')     out[i] = 'x';		i += 1
+		elseif (outpar[k] == 'y') out[i] = 'y';		i += 1
+		elseif (outpar[k] == 'z') out[i] = 'z';		i += 1
+		elseif (outpar[k] == 'i') out[i] = 'i';		i += 1
+		elseif (outpar[k] == 'c') out[i] = 'c';		i += 1
+		elseif (outpar[k] == 'n') out[i] = 'n';		i += 1
 		elseif (outpar[k] == 'R')
 			if (header.point_data_format != 2 && header.point_data_format != 3 && header.point_data_format != 5 &&
 				header.point_data_format != 7 && header.point_data_format != 8 && header.point_data_format != 10)
 				@warn("requested 'R' but points do not have RGB. Ignoring it.")
 			else
-				out[i] = 'R';		i = i + 1
+				out[i] = 'R';		i += 1
 			end
 		elseif (outpar[k] == 'G')
 			if (header.point_data_format != 2 && header.point_data_format != 3 && header.point_data_format != 5 &&
 				header.point_data_format != 7 && header.point_data_format != 8 && header.point_data_format != 10)
 				@warn("requested 'G' but points do not have RGB. Ignoring it.")
 			else
-				out[i] = 'G';		i = i + 1
+				out[i] = 'G';		i += 1
 			end
 		elseif (outpar[k] == 'B')
 			if (header.point_data_format != 2 && header.point_data_format != 3 && header.point_data_format != 5 &&
 				header.point_data_format != 7 && header.point_data_format != 8 && header.point_data_format != 10)
 				@warn("requested 'B' but points do not have RGB. Ignoring it.")
 			else
-				out[i] = 'B';		i = i + 1
+				out[i] = 'B';		i += 1
 			end
 		elseif (outpar[k] == 'I')
 			if (header.point_data_format != 8 && header.point_data_format != 10)
 				@warn("requested 'I' but points do not have RGBI. Ignoring it.")
 			else
-				out[i] = 'I';		i = i + 1
+				out[i] = 'I';		i += 1
 			end
 		elseif (outpar[k] == 't')
 			if (header.point_data_format != 1 && header.point_data_format != 3 &&
 				header.point_data_format != 4 && header.point_data_format != 5)
 				@warn("requested 't' but points do not have gps time. Ignoring it.")
 			else
-				out[i] = 't';		i = i + 1
+				out[i] = 't';		i += 1
 			end
 		end
 	end
@@ -452,3 +440,5 @@ function parse_inputs_las2dat(header, point, reader, outpar, class, startstop)
 	argout = unsafe_string(pointer(out))
 	return argout, firstPT, lastPT
 end
+
+const laz2xyz  = las2dat			# Alias
