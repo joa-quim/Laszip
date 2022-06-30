@@ -11,7 +11,7 @@ Install
 
     Pkg.add("git://github.com/joa-quim/Laszip.jl.git")
 
-For Windows you can download the laszip DLL from [here](https://fct-gmt.ualg.pt/tmp/laszip_64_dll.zip)
+For Windows you can download the laszip DLL from [here](https://fct-gmt.ualg.pt/tmp/laszip_w64_dll.zip)
 and make sure that the lib *laszip_w64.dll* is found by Julia. For unix, I'm afraid the user will to have
 to build the laszip shared library from source.
 
